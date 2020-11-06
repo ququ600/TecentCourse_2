@@ -68,7 +68,7 @@ protected:
 	// End of APawn interface
 
 public:
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable,Category = "Fire")
 	void Fire();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
 	FVector MuzzleOffset;
