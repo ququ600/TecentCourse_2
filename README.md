@@ -35,3 +35,9 @@ apk：https://pan.baidu.com/s/1CuI9AWbvs5h8aS9vfHOraA
 提取码：1111 
 <br>
 包括手机和电脑上运行两个版本（电脑是联机），但是功能没做完qwq，下次一定补上！
+
+## 第七次作业（最后一次）
+链接：https://pan.baidu.com/s/1UQQDh2zRmHsDsaHKa8ffDQ 
+提取码：1111 
+<br>
+做的不是很好，下周继续qwq
