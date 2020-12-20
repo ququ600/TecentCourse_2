@@ -13,5 +13,8 @@ UCLASS()
 class TECENTCOURSE_2_API ASMG : public AGun
 {
 	GENERATED_BODY()
-	
+public:
+	ASMG();
+		//UFUNCTION(BlueprintCallable, Category = "Fire")
+	void Fire() override;
 };

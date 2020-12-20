@@ -9,6 +9,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
+#include "Public/HealthComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // ATecentCourse_2Character
@@ -48,14 +52,10 @@ ATecentCourse_2Character::ATecentCourse_2Character()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 	
-
-
+	healthComp = CreateDefaultSubobject<UHealthComponent>(TEXT("HealthComp"));
+	healthComp->OnHealthChanged.AddDynamic(this, &ATecentCourse_2Character::OnHealthChanged);
 }
 
-void ATecentCourse_2Character::Tick(float DeltaTime)
-{
-	RotateWithCamera();
-}
 
 //////////////////////////////////////////////////////////////////////////
 // Input
@@ -91,7 +91,10 @@ void ATecentCourse_2Character::SetupPlayerInputComponent(class UInputComponent* 
 
 void ATecentCourse_2Character::Fire()
 {
-	isFire = true;
+	if (GetLocalRole() < ROLE_Authority) {
+		ServerFire();
+	}
+	/*isFire = true;
 	//GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, TEXT("OK"));
 	// 尝试发射物体。
 	if (ProjectileClass)
@@ -120,17 +123,56 @@ void ATecentCourse_2Character::Fire()
 				//Projectile->FireInDirection(LaunchDirection);
 			}
 		}
+	}*/
+	/*FHitResult Hit;
+	FVector CameraLocation;
+	FRotator CameraRotation;
+	GetActorEyesViewPoint(CameraLocation, CameraRotation);
+	FVector TraceEnd = CameraLocation + (CameraRotation.Vector() * 10000);
+	FCollisionQueryParams QueryParams;
+	// 忽略玩家
+	QueryParams.AddIgnoredActor(this);
+	QueryParams.bTraceComplex = true;
+	if (GetWorld()->LineTraceSingleByChannel(Hit, CameraLocation, TraceEnd, ECC_Visibility)) {
+		DrawDebugLine(GetWorld(), CameraLocation, TraceEnd, FColor::Red, false, 2, 0, 2);
+		AActor* HitActor = Hit.GetActor();
+		AActor* myOwner = GetOwner();
+		UGameplayStatics::ApplyPointDamage(HitActor, 20, CameraRotation.Vector(), Hit, myOwner->GetInstigatorController(), this, DamageType);
+	}
+
+	*/
+}
+
+void ATecentCourse_2Character::OnHealthChanged(UHealthComponent* OwnerHealthComp, float Health, float HealthDelta, const UDamageType* OwnerDamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	if (isDied) {
+		return;
+	}
+	if (Health <= 0 && !isDied) {
+		isDied = true;
+		GetMovementComponent()->StopMovementImmediately();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		DetachFromControllerPendingDestroy();
 	}
 }
 
-void ATecentCourse_2Character::RotateWithCamera()
+FVector ATecentCourse_2Character::GetPawnViewLocation() const
 {
-	
+	if (FollowCamera) {
+		return FollowCamera->GetComponentLocation();
+	}
+	return Super::GetPawnViewLocation();
 }
 
-void ATecentCourse_2Character::IncreaseScore()
+void ATecentCourse_2Character::ServerFire_Implementation()
 {
+	Fire();
+}
 
+bool ATecentCourse_2Character::ServerFire_Validate()
+{
+	return true;
 }
 
 void ATecentCourse_2Character::OnResetVR()
@@ -156,6 +198,7 @@ void ATecentCourse_2Character::TurnAtRate(float Rate)
 
 void ATecentCourse_2Character::LookUpAtRate(float Rate)
 {
+	GEngine->AddOnScreenDebugMessage(0, 0.5f, FColor::Yellow, TEXT("123"));
 	// calculate delta for this frame from the rate information
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
@@ -187,4 +230,11 @@ void ATecentCourse_2Character::MoveRight(float Value)
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
+}
+
+void ATecentCourse_2Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ATecentCourse_2Character,isDied);
 }

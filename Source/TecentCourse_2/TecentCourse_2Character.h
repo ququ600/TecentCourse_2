@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Net/UnrealNetwork.h"
 #include "TecentCourse_2Character.generated.h"
 
+class UDamageType;
 UCLASS(config=Game)
 class ATecentCourse_2Character : public ACharacter
 {
@@ -14,24 +16,27 @@ class ATecentCourse_2Character : public ACharacter
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
+	
 
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
 public:
 	ATecentCourse_2Character();
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera)
+		class UHealthComponent* healthComp;
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseTurnRate;
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
+		TSubclassOf<UDamageType> DamageType;
 	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "IsFire")
 		bool isFire;
-	virtual void Tick(float DeltaTime) override;
+
 
 protected:
 
@@ -43,6 +48,8 @@ protected:
 
 	/** Called for side to side input */
 	void MoveRight(float Value);
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	/** 
 	 * Called via input to turn at a given rate. 
@@ -70,9 +77,15 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable,Category = "Fire")
 	void Fire();
+	UFUNCTION(Server,Reliable,WithValidation)
+	void ServerFire();
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
 	FVector MuzzleOffset;
 
+	UFUNCTION(BlueprintCallable, Category = "Fire")
+	void OnHealthChanged(UHealthComponent* OwnerHealthComp, float Health, float HealthDelta, const class UDamageType* OwnerDamageType, class AController* InstigatedBy, AActor* DamageCauser);
+	UPROPERTY(BlueprintReadOnly,Replicated, Category = "Player");
+	bool isDied;
 	UPROPERTY(EditDefaultsOnly, Category = "Projectile")
 	TSubclassOf<class ATPSProjectile> ProjectileClass;
 	/** Returns CameraBoom subobject **/
@@ -80,8 +93,6 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	void RotateWithCamera();
-
-	void IncreaseScore();
+	virtual FVector GetPawnViewLocation() const override;
 };
 

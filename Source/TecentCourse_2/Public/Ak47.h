@@ -13,5 +13,13 @@ UCLASS()
 class TECENTCOURSE_2_API AAk47 : public AGun
 {
 	GENERATED_BODY()
-	
+public:
+	AAk47();
+	//UFUNCTION(BlueprintCallable, Category = "Fire")
+		void Fire() override;
+	UFUNCTION(BlueprintCallable, Category = "SunShine")
+		void BluePrintCall();
+	float LastTime;
+
+
 };

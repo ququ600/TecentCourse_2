@@ -49,6 +49,12 @@ void ATPSProjectile::FireInDirection(const FVector& ShootDirection)
 
 void ATPSProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* otherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	
 
-GEngine->AddOnScreenDebugMessage(-1, 20, FColor::Yellow, "ACubeActor OnHit---------");
+	AActor* HitActor = Hit.GetActor();
+	if (HitActor->ActorHasTag("Player")) {
+		GEngine->AddOnScreenDebugMessage(-1, 20, FColor::Yellow, "Player OnHit---------");
+	}
+	//	UGameplayStatics::ApplyPointDamage(HitActor, 20, Hit, GetOwner()->GetInstigatorController(), this);
+	GEngine->AddOnScreenDebugMessage(-1, 20, FColor::Yellow, "ACubeActor OnHit---------");
 }
